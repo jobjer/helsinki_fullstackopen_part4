@@ -1,0 +1,6 @@
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+
+{
+"title":"Trines matblogg","author":"Trine Sandberg","url":"https://trinesmatblogg.no/","likes":2000123
+}

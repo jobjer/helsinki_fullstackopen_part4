@@ -1,4 +1,4 @@
-// const http = require('http')
+const http = require('http')
 const express = require('express')
 const app = express()
 const cors = require('cors')
@@ -6,6 +6,8 @@ require('dotenv').config()
 const mongoose = require('mongoose')
 
 const url = process.env.MONGODB_URI
+
+mongoose.set('strictQuery', false)
 
 const blogSchema = new mongoose.Schema({
   title: String,
@@ -16,7 +18,6 @@ const blogSchema = new mongoose.Schema({
 
 const Blog = mongoose.model('Blog', blogSchema)
 
-// const mongoUrl = 'mongodb://localhost/bloglist'
 mongoose.connect(url)
   .then(() => {
     console.log('connected to MongoDB')
