@@ -11,6 +11,12 @@ test('six blogs are returned in json format', async () => {
   
 }, 100000)
 
+test('id is not undefined', async () => {
+  const response = await api.get('/api/blogs')
+  response.body.forEach(blog => {
+    expect(blog.id).toBeDefined()
+  })
+}, 100000)
 
 
 afterAll(async () => {
