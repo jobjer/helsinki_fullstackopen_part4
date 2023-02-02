@@ -68,6 +68,29 @@ test('an add request gets likes added if missing and set to 0', async () => {
 
 }, 100000)
 
+test('if a request is missing title or is missing then bad request is returned', async () => {
+  const blogMissingTitle = {
+    author: 'Robert C. Martin',
+    url: 'https://blog.cleancoder.com/uncle-bob/2011/01/19/individuals-and-interactions.html'
+  }  
+
+  await api
+    .post('/api/blogs')
+    .send(blogMissingTitle)
+    .expect(400)
+
+  const blogMissingUrl = {
+    title: 'Bringing Balance to the Force',
+    author: 'Robert C. Martin'
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(blogMissingUrl)
+    .expect(400)
+
+}, 100000)
+
 afterAll(async () => {
   await mongoose.connection.close()
 })
