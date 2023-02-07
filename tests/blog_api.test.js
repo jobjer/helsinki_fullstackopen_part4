@@ -65,9 +65,6 @@ describe('viewing a specific blog', () => {
 
 
 test('a blog can be added', async () => {
-  const blogsBeforeAdding = await api.get('/api/blogs')
-  const blogCountBeforeAdding = blogsBeforeAdding.body.length
-
   const newBlog = {
     title: 'FP vs. OO',
     author: 'Robert C. Martin',
@@ -81,11 +78,10 @@ test('a blog can be added', async () => {
     .expect(201)
     .expect('Content-Type', /application\/json/)
 
-  const response = await api.get('/api/blogs')
+  const blogsAtEnd = await helper.blogsInDb()
+  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
 
-  const title = response.body.map(r => r.title)
-
-  expect(response.body).toHaveLength(blogCountBeforeAdding + 1)
+  const title = blogsAtEnd.map(r => r.title)
   expect(title).toContain('FP vs. OO')
 }, 100000)
 
@@ -140,9 +136,10 @@ describe('if a request is missing mandatory fields, then bad request is returned
 
 test('a deletion of a blog returns 204 and does no longer exist', async () => {
   await resetToInitialBlogs()
-  const blogToDelete = helper.initialBlogs[0]
+  const blogsAtStart = await helper.blogsInDb()
+  const blogToDelete = blogsAtStart[0]
   await api
-    .delete(`/api/blogs/${blogToDelete._id}`)
+    .delete(`/api/blogs/${blogToDelete.id}`)
     .expect(204)
 
   const blogs = await Blog.find({})
@@ -159,15 +156,17 @@ test('a deletion of a blog returns 204 and does no longer exist', async () => {
 }, 100000)
 
 test('a blog can be updated', async () => {
-  const blogToUpdate = helper.initialBlogs[1]
+  await resetToInitialBlogs()
+  const blogsAtStart = await helper.blogsInDb()
+  const blogToUpdate = blogsAtStart[0]
   blogToUpdate.likes = 50
 
   await api
-    .put(`/api/blogs/${blogToUpdate._id}`)
+    .put(`/api/blogs/${blogToUpdate.id}`)
     .send(blogToUpdate)
     .expect(200)
 
-  const blog = await Blog.findById(blogToUpdate._id)
+  const blog = await Blog.findById(blogToUpdate.id)
   expect(blog.likes).toStrictEqual(50)
   
 }, 100000)
