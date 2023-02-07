@@ -1,29 +1,67 @@
 const mongoose = require('mongoose')
 const supertest = require('supertest')
+// const bcrypt = require('bcrypt')
+
+const helper = require('./test_helper')
 const app = require('../app')
 const api = supertest(app)
-const helper = require('./test_helper')
+
 const Blog = require('../models/blog')
+// const User = require('../models/user')
 
 const resetToInitialBlogs = async () => {
   await Blog.deleteMany({})
   await Blog.insertMany(helper.initialBlogs)
 }
 
-test('get all returns six blogs in json format', async () => {
-  await resetToInitialBlogs()
-  const response = await api.get('/api/blogs')
-    .expect('Content-Type', /json/)
-  expect(response.body).toHaveLength(6)
-  
-}, 100000)
+describe('when there is initially some blogs saved', () => {
+  test('get all returns six blogs in json format', async () => {
+    await resetToInitialBlogs()
+    const response = await api.get('/api/blogs')
+      .expect('Content-Type', /json/)
+    expect(response.body).toHaveLength(6)
+    
+  }, 100000)
 
-test('id is not undefined in any of the blogs', async () => {
-  const response = await api.get('/api/blogs')
-  response.body.forEach(blog => {
-    expect(blog.id).toBeDefined()
-  })
-}, 100000)
+  test('id is not undefined in any of the blogs', async () => {
+    const response = await api.get('/api/blogs')
+    response.body.forEach(blog => {
+      expect(blog.id).toBeDefined()
+    })
+  }, 100000)
+})
+
+describe('viewing a specific blog', () => {
+
+  test('succeeds with a valid id', async () => {
+    const blogsAtStart = await helper.blogsInDb()
+
+    const blogToView = blogsAtStart[0]
+
+    const resultBlog = await api
+      .get(`/api/blogs/${blogToView.id}`)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    expect(resultBlog.body).toEqual(blogToView)
+  }, 100000)
+
+  test('fails with statuscode 404 if blog does not exist', async () => {
+    const validNonexistingId = await helper.nonExistingId()
+
+    await api
+      .get(`/api/blogs/${validNonexistingId}`)
+      .expect(404)
+  }, 100000)
+
+  // test('fails with statuscode 400 id is invalid', async () => {
+  //   const invalidId = 'invalidid'
+
+  //   await api
+  //     .get(`/api/blogs/${invalidId}`)
+  //     .expect(400)
+  // }, 100000)
+})
 
 
 test('a blog can be added', async () => {
@@ -133,6 +171,39 @@ test('a blog can be updated', async () => {
   expect(blog.likes).toStrictEqual(50)
   
 }, 100000)
+
+// describe('when there is initially one user in db', () => {
+//   beforeEach(async () => {
+//     await User.deleteMany({})
+
+//     const passwordHash = await bcrypt.hash('sekret', 10)
+//     const user = new User({ username: 'root', passwordHash })
+
+//     await user.save()
+//   }, 100000)
+
+//   test('creation succeeds with a fresh username', async () => {
+//     const usersAtStart = await helper.usersInDb()
+
+//     const newUser = {
+//       username: 'mluukkai',
+//       name: 'Matti Luukkainen',
+//       password: 'salainen',
+//     }
+
+//     await api
+//       .post('/api/users')
+//       .send(newUser)
+//       .expect(201)
+//       .expect('Content-Type', /application\/json/)
+
+//     const usersAtEnd = await helper.usersInDb()
+//     expect(usersAtEnd).toHaveLength(usersAtStart.length + 1)
+
+//     const usernames = usersAtEnd.map(u => u.username)
+//     expect(usernames).toContain(newUser.username)
+//   }, 100000)
+// })
 
 afterAll(async () => {
   await mongoose.connection.close()
