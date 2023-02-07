@@ -1,0 +1,9 @@
+PUT http://localhost:3003/api/blogs/63db828ad198b7be7f907b54
+Content-Type: application/json
+
+{
+"title":"Trines matblogg",
+"author":"Trine Sandberg",
+"url":"https://trinesmatblogg.no/",
+"likes":2004
+}

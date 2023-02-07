@@ -5,17 +5,20 @@ const api = supertest(app)
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
 
-
-test('six blogs are returned in json format', async () => {
+const resetToInitialBlogs = async () => {
   await Blog.deleteMany({})
   await Blog.insertMany(helper.initialBlogs)
+}
+
+test('get all returns six blogs in json format', async () => {
+  await resetToInitialBlogs()
   const response = await api.get('/api/blogs')
     .expect('Content-Type', /json/)
   expect(response.body).toHaveLength(6)
   
 }, 100000)
 
-test('id is not undefined', async () => {
+test('id is not undefined in any of the blogs', async () => {
   const response = await api.get('/api/blogs')
   response.body.forEach(blog => {
     expect(blog.id).toBeDefined()
@@ -49,7 +52,7 @@ test('a blog can be added', async () => {
 }, 100000)
 
 
-test('an add request gets likes added if missing and set to 0', async () => {
+test('if the likes prop is missing in add request, then it is added and set to 0', async () => {
   const titleOfNewBlog = 'What Software Craftsmanship is about'
 
   const newBlog = {
@@ -68,27 +71,67 @@ test('an add request gets likes added if missing and set to 0', async () => {
 
 }, 100000)
 
-test('if a request is missing title or is missing then bad request is returned', async () => {
-  const blogMissingTitle = {
-    author: 'Robert C. Martin',
-    url: 'https://blog.cleancoder.com/uncle-bob/2011/01/19/individuals-and-interactions.html'
-  }  
+describe('if a request is missing mandatory fields, then bad request is returned', () => {
+  test('if a request is missing title, then bad request is returned', async () => {
+    const blogMissingTitle = {
+      author: 'Robert C. Martin',
+      url: 'https://blog.cleancoder.com/uncle-bob/2011/01/19/individuals-and-interactions.html'
+    }  
+
+    await api
+      .post('/api/blogs')
+      .send(blogMissingTitle)
+      .expect(400)
+
+  }, 100000)
+
+  test('if a request is missing url, then bad request is returned', async () => {
+
+    const blogMissingUrl = {
+      title: 'Bringing Balance to the Force',
+      author: 'Robert C. Martin'
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(blogMissingUrl)
+      .expect(400)
+
+  }, 100000)
+})
+
+test('a deletion of a blog returns 204 and does no longer exist', async () => {
+  await resetToInitialBlogs()
+  const blogToDelete = helper.initialBlogs[0]
+  await api
+    .delete(`/api/blogs/${blogToDelete._id}`)
+    .expect(204)
+
+  const blogs = await Blog.find({})
+
+  expect(blogs).toHaveLength(
+    helper.initialBlogs.length - 1
+  )
+
+  const blogsAfterDeletion = blogs.map(blog => blog.toJSON())
+
+  const titles = blogsAfterDeletion.map(r => r.title)
+
+  expect(titles).not.toContain(blogToDelete.title)
+}, 100000)
+
+test('a blog can be updated', async () => {
+  const blogToUpdate = helper.initialBlogs[1]
+  blogToUpdate.likes = 50
 
   await api
-    .post('/api/blogs')
-    .send(blogMissingTitle)
-    .expect(400)
+    .put(`/api/blogs/${blogToUpdate._id}`)
+    .send(blogToUpdate)
+    .expect(200)
 
-  const blogMissingUrl = {
-    title: 'Bringing Balance to the Force',
-    author: 'Robert C. Martin'
-  }
-
-  await api
-    .post('/api/blogs')
-    .send(blogMissingUrl)
-    .expect(400)
-
+  const blog = await Blog.findById(blogToUpdate._id)
+  expect(blog.likes).toStrictEqual(50)
+  
 }, 100000)
 
 afterAll(async () => {
