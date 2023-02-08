@@ -54,13 +54,13 @@ describe('viewing a specific blog', () => {
       .expect(404)
   }, 100000)
 
-  // test('fails with statuscode 400 id is invalid', async () => {
-  //   const invalidId = 'invalidid'
+  test('fails with statuscode 400 id is invalid', async () => {
+    const invalidId = '63e38805e465d0a7208514f'
 
-  //   await api
-  //     .get(`/api/blogs/${invalidId}`)
-  //     .expect(400)
-  // }, 100000)
+    await api
+      .get(`/api/blogs/${invalidId}`)
+      .expect(400)
+  }, 100000)
 })
 
 
@@ -181,6 +181,19 @@ describe('when there is initially one user in db', () => {
     await user.save()
   }, 100000)
 
+  test('get users returns one user in json format', async () => {
+    const users = await helper.usersInDb()
+    
+    const response = await api
+      .get('/api/users')
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+  
+    expect(response.body).toHaveLength(1)  
+    expect(response.body).toStrictEqual(users)
+  
+  }, 100000)
+
   test('creation succeeds with a fresh username', async () => {
     const usersAtStart = await helper.usersInDb()
 
@@ -202,22 +215,106 @@ describe('when there is initially one user in db', () => {
     const usernames = usersAtEnd.map(u => u.username)
     expect(usernames).toContain(newUser.username)
   }, 100000)
+
 })
 
-test('get users returns two users in json format', async () => {
-  const users = await helper.usersInDb()
-  
-  const response = await api
-    .get('/api/users')
-    .expect(200)
-    .expect('Content-Type', /application\/json/)
+describe('the following add requests should fail with proper statuscode and message', () => {
+  beforeEach(async () => {
+    await User.deleteMany({})
 
-  expect(response.body).toHaveLength(2)
+    const passwordHash = await bcrypt.hash('sekret', 10)
+    const user = new User({ username: 'root', passwordHash })
 
-  expect(response.body).toStrictEqual(users)
-  console.log(response.body)
+    await user.save()
+  }, 100000)
 
-}, 100000)
+  afterEach(async () => {
+    const usersAtStart = await helper.usersInDb()
+    expect(usersAtStart).toHaveLength(1)
+
+  }, 100000)
+
+  test('if username already taken', async () => {
+
+    const newUser = {
+      username: 'root',
+      name: 'Superuser',
+      password: 'salainen'
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('expected `username` to be unique')
+
+  }, 100000)
+
+  test('if username is missing or is less than 3 characters', async () => {
+
+    const newUser = {
+      name: 'Donald Duck',
+      password: 'Dolly'
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(404)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('username is mandatory and must be at least 3 characters long')
+
+    const newUser2 = {
+      username: 'DD',
+      name: 'Donald Duck',
+      password: 'Dolly'
+    }
+
+    const result2 = await api
+      .post('/api/users')
+      .send(newUser2)
+      .expect(404)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result2.body.error).toContain('username is mandatory and must be at least 3 characters long')
+
+  }, 100000)
+
+  test('if password is missing or is less than 3 characters', async () => {
+
+    const newUser = {
+      username: 'donald',
+      name: 'Donald Duck',
+      password: 'Do'
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(404)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('password is mandatory and must be at least 3 characters long')
+
+    const newUser2 = {
+      username: 'donald',
+      name: 'Donald Duck'
+    }
+
+    const result2 = await api
+      .post('/api/users')
+      .send(newUser2)
+      .expect(404)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result2.body.error).toContain('password is mandatory and must be at least 3 characters long')
+
+  }, 100000)
+})
+
 
 afterAll(async () => {
   await mongoose.connection.close()
