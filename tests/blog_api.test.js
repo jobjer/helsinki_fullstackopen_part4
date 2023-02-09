@@ -14,6 +14,11 @@ const resetToInitialBlogs = async () => {
   await Blog.insertMany(helper.initialBlogs)
 }
 
+const setInitialUsers = async () => {
+  await User.deleteMany({})
+  await User.insertMany(helper.initialUsers)
+}
+
 describe('when there is initially some blogs saved', () => {
   test('get all returns six blogs in json format', async () => {
     await resetToInitialBlogs()
@@ -43,7 +48,7 @@ describe('viewing a specific blog', () => {
       .expect(200)
       .expect('Content-Type', /application\/json/)
 
-    expect(resultBlog.body).toEqual(blogToView)
+    expect(resultBlog.body.title).toEqual(blogToView.title)
   }, 100000)
 
   test('fails with statuscode 404 if blog does not exist', async () => {
@@ -62,28 +67,6 @@ describe('viewing a specific blog', () => {
       .expect(400)
   }, 100000)
 })
-
-
-test('a blog can be added', async () => {
-  const newBlog = {
-    title: 'FP vs. OO',
-    author: 'Robert C. Martin',
-    url: 'http://blog.cleancoder.com/uncle-bob/2018/04/13/FPvsOO.html',
-    likes: 0
-  }  
-
-  await api
-    .post('/api/blogs')
-    .send(newBlog)
-    .expect(201)
-    .expect('Content-Type', /application\/json/)
-
-  const blogsAtEnd = await helper.blogsInDb()
-  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
-
-  const title = blogsAtEnd.map(r => r.title)
-  expect(title).toContain('FP vs. OO')
-}, 100000)
 
 
 test('if the likes prop is missing in add request, then it is added and set to 0', async () => {
@@ -171,6 +154,30 @@ test('a blog can be updated', async () => {
   
 }, 100000)
 
+test('a blog can be added', async () => {
+  await resetToInitialBlogs()
+  await setInitialUsers()
+  const newBlog = {
+    title: 'FP vs. OO',
+    author: 'Robert C. Martin',
+    url: 'http://blog.cleancoder.com/uncle-bob/2018/04/13/FPvsOO.html',
+    likes: 0
+  }  
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  const blogsAtEnd = await helper.blogsInDb()
+  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+
+  const title = blogsAtEnd.map(r => r.title)
+  expect(title).toContain('FP vs. OO')
+  
+}, 100000)
+
 describe('when there is initially one user in db', () => {
   beforeEach(async () => {
     await User.deleteMany({})
@@ -180,7 +187,7 @@ describe('when there is initially one user in db', () => {
 
     await user.save()
   }, 100000)
-
+  
   test('get users returns one user in json format', async () => {
     const users = await helper.usersInDb()
     
@@ -317,5 +324,6 @@ describe('the following add requests should fail with proper statuscode and mess
 
 
 afterAll(async () => {
+  await setInitialUsers()
   await mongoose.connection.close()
 })

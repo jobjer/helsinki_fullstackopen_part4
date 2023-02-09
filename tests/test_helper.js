@@ -9,6 +9,7 @@ const initialBlogs = [
     author: 'Michael Chan',
     url: 'https://reactpatterns.com/',
     likes: 7,
+    user: '63e4adb0abac08a60dd01baf',
     __v: 0
   },
   {
@@ -17,6 +18,7 @@ const initialBlogs = [
     author: 'Edsger W. Dijkstra',
     url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
     likes: 5,
+    user: '63e4adb0abac08a60dd01bb1',
     __v: 0
   },
   {
@@ -25,6 +27,7 @@ const initialBlogs = [
     author: 'Edsger W. Dijkstra',
     url: 'http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html',
     likes: 12,
+    user: '63e4adb0abac08a60dd01bb1',
     __v: 0
   },
   {
@@ -33,6 +36,7 @@ const initialBlogs = [
     author: 'Robert C. Martin',
     url: 'http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll',
     likes: 10,
+    user: '63e4adb0abac08a60dd01bb2',
     __v: 0
   },
   {
@@ -41,6 +45,7 @@ const initialBlogs = [
     author: 'Robert C. Martin',
     url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html',
     likes: 0,
+    user: '63e4adb0abac08a60dd01bb2',
     __v: 0
   },
   {
@@ -49,8 +54,40 @@ const initialBlogs = [
     author: 'Robert C. Martin',
     url: 'http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html',
     likes: 2,
+    user: '63e4adb0abac08a60dd01bb2',
     __v: 0
   }  
+]
+
+const initialUsers = [
+  {
+    _id: '63e4adb0abac08a60dd01bb2',
+    user: 'Donald Duck',
+    username: 'dduck',
+    passwordHash: '$2a$10$ur1H3Z5aepQJMm78onlZa.nSH9JuLPEA0E0PF/rZsnXxl2XxD9hW2',
+    blogs: [
+      '5a422b891b54a676234d17fa', 
+      '5a422ba71b54a676234d17fb', 
+      '5a422bc61b54a676234d17fc'],
+    __v: 0
+  },
+  { _id: '63e4adb0abac08a60dd01baf',
+    user: 'Dewey Duck',
+    username: 'dewey',
+    passwordHash: '$2a$10$ooHvIeh3GUX3sUvEv2kz8O00fdmdUPCnH4h54gSl4nzz6GOeplVe.',
+    blogs: ['5a422a851b54a676234d17f7'],
+    __v: 0
+  },
+  {
+    _id: '63e4adb0abac08a60dd01bb1',
+    user: 'Dolly Duck',
+    username: 'dollyd',
+    passwordHash: '$2a$10$z36CnLzYdYnj.BQ1beYZLOwe5y9jQedqaSlskaAcrqIvnhx98MzcS',
+    blogs: [
+      '5a422aa71b54a676234d17f8', 
+      '5a422b3a1b54a676234d17f9'],
+    __v: 0
+  }
 ]
 
 const nonExistingId = async () => {
@@ -74,6 +111,7 @@ const usersInDb = async () => {
 
 module.exports = { 
   initialBlogs, 
+  initialUsers,
   nonExistingId, 
   blogsInDb, 
   usersInDb
