@@ -7,26 +7,26 @@ mongoose.set('strictQuery', false)
 
 mongoose.connect(url)
 
-let blogTitle = ''
-let blogAuthor = ''
-let blogUrl = ''
-let blogLikes = ''
+// let blogTitle = ''
+// let blogAuthor = ''
+// let blogUrl = ''
+// let blogLikes = ''
 
-if (process.argv.length > 2) {
-  blogTitle = process.argv[2]
-}
+// if (process.argv.length > 2) {
+//   blogTitle = process.argv[2]
+// }
 
-if (process.argv.length > 3) {
-  blogAuthor = process.argv[3]
-}
+// if (process.argv.length > 3) {
+//   blogAuthor = process.argv[3]
+// }
 
-if (process.argv.length > 4) {
-  blogUrl = process.argv[4]
-}
+// if (process.argv.length > 4) {
+//   blogUrl = process.argv[4]
+// }
 
-if (process.argv.length > 5) {
-  blogLikes = process.argv[5]
-}
+// if (process.argv.length > 5) {
+//   blogLikes = process.argv[5]
+// }
 
 
 const blogSchema = new mongoose.Schema({
