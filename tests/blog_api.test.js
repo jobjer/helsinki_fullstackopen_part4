@@ -19,17 +19,35 @@ const setInitialUsers = async () => {
   await User.insertMany(helper.initialUsers)
 }
 
+const getToken = async () => {
+
+  const userAndPw = {
+    'username': 'dduck',
+    'password': 'dolly'
+  }
+
+  const response = await api
+    .post('/api/login')
+    .send(userAndPw)
+
+  const authorizationHeader = `Bearer ${response.body.token}`
+
+  return authorizationHeader  
+}
+
 describe('when there is initially some blogs saved', () => {
   test('get all returns six blogs in json format', async () => {
     await resetToInitialBlogs()
-    const response = await api.get('/api/blogs')
+    const response = await api
+      .get('/api/blogs')
       .expect('Content-Type', /json/)
     expect(response.body).toHaveLength(6)
     
   }, 100000)
 
   test('id is not undefined in any of the blogs', async () => {
-    const response = await api.get('/api/blogs')
+    const response = await api
+      .get('/api/blogs')
     response.body.forEach(blog => {
       expect(blog.id).toBeDefined()
     })
@@ -70,6 +88,7 @@ describe('viewing a specific blog', () => {
 
 
 test('if the likes prop is missing in add request, then it is added and set to 0', async () => {
+  const token = await getToken()
   const titleOfNewBlog = 'What Software Craftsmanship is about'
 
   const newBlog = {
@@ -80,6 +99,7 @@ test('if the likes prop is missing in add request, then it is added and set to 0
 
   const postResponse = await api
     .post('/api/blogs')
+    .set({ Authorization: token })
     .send(newBlog)
     .expect(201)
     .expect('Content-Type', /application\/json/)
@@ -90,6 +110,7 @@ test('if the likes prop is missing in add request, then it is added and set to 0
 
 describe('if a request is missing mandatory fields, then bad request is returned', () => {
   test('if a request is missing title, then bad request is returned', async () => {
+    const token = await getToken()
     const blogMissingTitle = {
       author: 'Robert C. Martin',
       url: 'https://blog.cleancoder.com/uncle-bob/2011/01/19/individuals-and-interactions.html'
@@ -97,13 +118,14 @@ describe('if a request is missing mandatory fields, then bad request is returned
 
     await api
       .post('/api/blogs')
+      .set({ Authorization: token })
       .send(blogMissingTitle)
       .expect(400)
 
   }, 100000)
 
   test('if a request is missing url, then bad request is returned', async () => {
-
+    const token = await getToken()
     const blogMissingUrl = {
       title: 'Bringing Balance to the Force',
       author: 'Robert C. Martin'
@@ -111,7 +133,8 @@ describe('if a request is missing mandatory fields, then bad request is returned
 
     await api
       .post('/api/blogs')
-      .send(blogMissingUrl)
+      .set({ Authorization: token })
+      .send(blogMissingUrl)      
       .expect(400)
 
   }, 100000)
@@ -119,10 +142,12 @@ describe('if a request is missing mandatory fields, then bad request is returned
 
 test('a deletion of a blog returns 204 and does no longer exist', async () => {
   await resetToInitialBlogs()
+  const token = await getToken()
   const blogsAtStart = await helper.blogsInDb()
-  const blogToDelete = blogsAtStart[0]
+  const blogToDelete = blogsAtStart[5]
   await api
     .delete(`/api/blogs/${blogToDelete.id}`)
+    .set({ Authorization: token })
     .expect(204)
 
   const blogs = await Blog.find({})
@@ -155,6 +180,7 @@ test('a blog can be updated', async () => {
 }, 100000)
 
 test('a blog can be added', async () => {
+  const token = await getToken()
   await resetToInitialBlogs()
   await setInitialUsers()
   const newBlog = {
@@ -167,6 +193,7 @@ test('a blog can be added', async () => {
   await api
     .post('/api/blogs')
     .send(newBlog)
+    .set({ Authorization: token })
     .expect(201)
     .expect('Content-Type', /application\/json/)
 
@@ -175,6 +202,21 @@ test('a blog can be added', async () => {
 
   const title = blogsAtEnd.map(r => r.title)
   expect(title).toContain('FP vs. OO')
+  
+}, 100000)
+
+test('adding blog fails if token is missing', async () => {
+  const newBlog = {
+    title: 'FP vs. OO',
+    author: 'Robert C. Martin',
+    url: 'http://blog.cleancoder.com/uncle-bob/2018/04/13/FPvsOO.html',
+    likes: 0
+  }  
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(401)
   
 }, 100000)
 
