@@ -1,7 +1,7 @@
 
 const generatePwHash = async (password) => {
   console.log(password)
-  const bcrypt = require('bcryptjs')
+  const bcrypt = require('bcrypt')
 
   const saltRounds = 10
   const passwordHash = await bcrypt.hash(password, saltRounds)

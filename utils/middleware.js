@@ -1,13 +1,7 @@
 const jwt = require('jsonwebtoken')
-const logger = require('./logger')
 
-const requestLogger = (request, response, next) => {
-  logger.info('Method:', request.method)
-  logger.info('Path:  ', request.path)
-  logger.info('Body:  ', request.body)
-  logger.info('---')
-  next()
-}
+const User = require('../models/user')
+const logger = require('./logger')
 
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: 'unknown endpoint' })
@@ -21,32 +15,41 @@ const errorHandler = (error, request, response, next) => {
   } else if (error.name === 'ValidationError') {
     return response.status(400).json({ error: error.message })
   } else if (error.name ===  'JsonWebTokenError') {
-    return response.status(401).json({ error: 'token missing or invalid' })
+    return response.status(400).json({ error: 'token missing or invalid' })
   }
 
   next(error)
 }
 
-const tokenExtractor = (request, response, next) => {
+const getTokenFrom = request => {
   const authorization = request.get('authorization')
-  if (authorization && authorization.startsWith('Bearer ')) {
-    request.token = authorization.replace('Bearer ', '')
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    return authorization.substring(7)
   }
+  return null
+}
+
+const tokenExtractor = (request, response, next) => {
+  request.token = getTokenFrom(request)
   next()
 }
 
-const userExtractor = (request, response, next) => {
-  const decodedToken = jwt.verify(request.token, process.env.SECRET)
-  if (!decodedToken.id) {
-    return response.status(401).json({ error: 'token invalid' })
+const userExtractor = async (request, response, next) => {
+  const token = getTokenFrom(request)
+
+  if (token) {
+    const decodedToken = jwt.verify(token, process.env.SECRET)
+    if (!decodedToken.id) {
+      return response.status(401).json({ error: 'token invalid' })
+    }
+  
+    request.user = await User.findById(decodedToken.id)
   }
-  request.user =  decodedToken.id
+
   next()
 }
-
 
 module.exports = {
-  requestLogger,
   unknownEndpoint,
   errorHandler,
   tokenExtractor,
