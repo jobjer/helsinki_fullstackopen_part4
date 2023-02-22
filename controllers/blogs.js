@@ -12,17 +12,15 @@ blogsRouter.get('/', async (request, response) => {
 })
 
 blogsRouter.post('/', userExtractor, async (request, response) => {
+  const user = request.user
+  if (!user) {
+    return response.status(401).json({ error: 'token missing or invalid' })
+  }
   const { title, author, url, likes } = request.body
   const blog = new Blog({
     title, author, url, 
     likes: likes ? likes : 0
   })
-
-  const user = request.user
-
-  if (!user) {
-    return response.status(401).json({ error: 'operation not permitted' })
-  }
 
   blog.user = user._id
 
@@ -34,10 +32,14 @@ blogsRouter.post('/', userExtractor, async (request, response) => {
   response.status(201).json(createdBlog)
 })
 
-blogsRouter.put('/:id', async (request, response) => {
-  const { title, url, author, likes } = request.body
+blogsRouter.put('/:id', userExtractor, async (request, response) => {
+  const { user, title, url, author, likes } = request.body
+  
+  if (!user) {
+    return response.status(401).json({ error: 'operation not permitted' })
+  }
 
-  const updatedBlog = await Blog.findByIdAndUpdate(request.params.id,  { title, url, author, likes }, { new: true })
+  const updatedBlog = await Blog.findByIdAndUpdate(request.params.id,  { user, title, url, author, likes }, { new: true })
 
   response.json(updatedBlog)
 })

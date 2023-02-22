@@ -11,13 +11,15 @@ const initialBlogs = [
   {
     title: "First class tests",
     author: "Robert C. Martin",
-    url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll",
+    url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.html",
     likes: 10,
   },
 ]
 
 const initialUsers = [
-  { username: 'tester', password: 'sekret' }
+  { username: 'tester', password: 'secret' },
+  { username: 'jbjerga', name: 'Jostein Bjerga', password: 'secret' },
+  { username: 'dduck', name: 'Donald Duck', password: 'dolly' }
 ]
 
 const nonExistingId = async () => {

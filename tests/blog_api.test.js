@@ -49,11 +49,14 @@ describe('blogs api', () => {
 
     test('a blog can be edited', async () => {
       const [blogBefore] = await blogsInDb()
+      const users = await usersInDb()
 
       const modifiedBlog = {...blogBefore, title: 'Goto considered useful'}
+      modifiedBlog.user = users[0].id
 
       await api
         .put(`/api/blogs/${blogBefore.id}`)
+        .set('Authorization', authHeader)
         .send(modifiedBlog)
         .expect(200)
     
@@ -187,6 +190,26 @@ describe('blogs api', () => {
   })
 
   describe('creation of a user', () => {
+    test('succeeds with valid username and password', async () => {
+      const user = {
+        username: 'mluukkai',
+        password: 'secret'
+      }
+    
+      const response = await api
+        .post('/api/users')
+        .send(user)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+    
+      const users = await usersInDb()
+
+      expect(users).toHaveLength(2)
+      const usernames = users.map(u => u.username)
+      expect(usernames).toContain(
+        user.username
+      )
+    })
 
     test('fails with a proper error if username is too short', async () => {
       const user = {
@@ -235,31 +258,52 @@ describe('blogs api', () => {
         'expected `username` to be unique.'
       )
     })  
-    
-    test('succeeds with valid username and password', async () => {
-      const user = {
-        username: 'mluukkai',
-        password: 'secret'
-      }
-    
-      const response = await api
-        .post('/api/users')
-        .send(user)
-        .expect(201)
-        .expect('Content-Type', /application\/json/)
-    
-      const users = await usersInDb()
-
-      expect(users).toHaveLength(initialUsers.length + 1)
-      const usernames = users.map(u => u.username)
-      expect(usernames).toContain(
-        user.username
-      )
-    })
   })
 
 })
 
 afterAll(async () => {
+  "jbjerga user and blog"
+  await User.deleteMany({})
+  await Blog.deleteMany({})
+
+  let user = initialUsers[1]
+  await api.post('/api/users').send(user)
+
+  let response = await api.post('/api/login').send(user)   
+  authHeader = `Bearer ${response.body.token}`
+  
+  let blog = {
+    title: "React patterns",
+    author: "Michael Chan",
+    url: "https://reactpatterns.com/",
+    likes: 7,
+  }
+
+   await api
+    .post('/api/blogs')
+    .set('Authorization', authHeader)
+    .send(blog)
+
+  "jbjerga user and blog"
+  user = initialUsers[2]
+  await api.post('/api/users').send(user)
+
+  response = await api.post('/api/login').send(user)   
+  authHeader = `Bearer ${response.body.token}`
+
+  blog = {
+    title: "First class tests",
+    author: "Robert C. Martin",
+    url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.html",
+    likes: 10,
+  }
+
+   await api
+    .post('/api/blogs')
+    .set('Authorization', authHeader)
+    .send(blog)
+
   await mongoose.connection.close()
+
 })
